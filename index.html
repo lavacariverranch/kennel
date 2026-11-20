@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LRR Kennel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#5B3A24">
+<!-- Home screen icon and name. iPhone reads the apple-* lines; Android reads the manifest. -->
+<link rel="apple-touch-icon" href="lrr-kennel-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="lrr-kennel-icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="LRR Kennel">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  :root { --bg: #5B3A24; --ink: #F3EBD8; --soft: rgba(243, 235, 216, .78); }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
+  body { font: 18px/1.45 Georgia, 'Times New Roman', serif; display: flex; flex-direction: column; align-items: center;
+    padding: calc(env(safe-area-inset-top, 0px) + 32px) 20px calc(env(safe-area-inset-bottom, 0px) + 32px); box-sizing: border-box; min-height: 100vh; }
+  img.logo { width: 180px; height: 180px; border-radius: 36px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
+  h1 { font-size: 28px; margin: 22px 0 4px; font-weight: 700; letter-spacing: .5px; }
+  p { margin: 6px 0; max-width: 420px; text-align: center; color: var(--soft); }
+  a.go { display: block; margin: 26px 0 8px; padding: 18px 28px; background: var(--ink); color: var(--bg); border-radius: 14px;
+    font: 700 21px/1.2 Georgia, serif; text-decoration: none; text-align: center; min-width: 240px; }
+  .how { margin-top: 26px; background: rgba(0,0,0,.18); border-radius: 14px; padding: 16px 18px; max-width: 420px; width: 100%; box-sizing: border-box; }
+  .how h2 { font-size: 19px; margin: 0 0 8px; }
+  .how ol { margin: 0; padding-left: 22px; } .how li { margin: 6px 0; }
+  .note { font-size: 14px; margin-top: 18px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<!--
+  LRR Kennel staff app: home screen page.
+  This page only gives the phone the kennel icon and name. Opened from the home screen icon it goes straight to the
+  kennel app (a Google Apps Script web app). Opened in a normal browser tab it shows how to add the icon.
+  It does NOT show the app inside a frame like the guest app does: the staff app needs a Google sign-in, and Google's
+  sign-in page refuses to open inside a frame, so the app opens as a full page instead.
+  It holds no names, no Sheet link and no keys.
+      ...?app=test   opens the TEST copy (the @HEAD /dev link; only works for the script owner's Google account)
+  At Segment 4.5 (copy to the kennel account) put the kennel account's web app ID in APPS.live below.
+-->
+<img class="logo" src="lrr-kennel-icon-512.png" alt="LRR Kennel">
+<h1>LRR Kennel</h1>
+<p id="msg">The Lavaca River Ranch kennel app for staff.</p>
+<a class="go" id="go" href="#">Open the kennel app</a>
+<div class="how" id="how">
+  <h2>Put it on your phone's home screen</h2>
+  <ol id="ios" hidden>
+    <li>In Safari, tap the <b>Share</b> button (the square with the arrow).</li>
+    <li>Scroll down and tap <b>Add to Home Screen</b>.</li>
+    <li>Tap <b>Add</b>. The brown LRR icon is now on your phone.</li>
+  </ol>
+  <ol id="android" hidden>
+    <li>In Chrome, tap the <b>⋮</b> menu at the top right.</li>
+    <li>Tap <b>Add to Home screen</b> (or <b>Install app</b>).</li>
+    <li>Tap <b>Add</b>. The brown LRR icon is now on your phone.</li>
+  </ol>
+  <ol id="other" hidden>
+    <li>Open this page on your phone (Safari on iPhone, Chrome on Android).</li>
+    <li>Use the browser's <b>Add to Home Screen</b> option.</li>
+  </ol>
+  <p class="note">The first time, Google may ask you to sign in. Use your kennel Google account.</p>
+</div>
+<script>
+(function () {
+  // The kennel app's web app IDs. These are not secrets (they are part of the app's link).
+  // live: until Segment 4.5 there is only the test copy, so both point to it.
+  var APPS = {
+    live: 'https://script.google.com/macros/s/AKfycbxl9Bd8H7kvpqNWFGuryNflDjVo7gKoZlPrBfGHPbtY/dev',
+    test: 'https://script.google.com/macros/s/AKfycbxl9Bd8H7kvpqNWFGuryNflDjVo7gKoZlPrBfGHPbtY/dev'
+  };
+  var q = new URLSearchParams(location.search);
+  var KEY = 'lrr-kennel-which';
+  var which = q.get('app') === 'test' ? 'test' : '';
+  try {
+    if (which) localStorage.setItem(KEY, which);
+    else which = localStorage.getItem(KEY) || 'live';
+  } catch (e) { which = which || 'live'; }
+  var url = APPS[which] || APPS.live;
+  document.getElementById('go').href = url;
+
+  var home = false;
+  try { home = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches); } catch (e) {}
+  if (home) {
+    // Opened from the home screen icon: go straight to the app.
+    document.getElementById('how').hidden = true;
+    document.getElementById('msg').textContent = 'Opening the kennel app…';
+    location.replace(url);
+    return;
+  }
+  var ua = navigator.userAgent || '';
+  var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && 'ontouchend' in document);
+  document.getElementById(ios ? 'ios' : /Android/.test(ua) ? 'android' : 'other').hidden = false;
+})();
+</script>
+</body>
+</html>
